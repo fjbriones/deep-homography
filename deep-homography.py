@@ -3,6 +3,8 @@ from keras.models import Sequential, load_model
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Reshape, Activation, Lambda
 from keras.optimizers import SGD
 from keras import backend as K
+#from scipy.misc import imresize
+from PIL import Image
 import glob
 import numpy as np
 import os.path
@@ -66,44 +68,47 @@ def classification_network_last(model, lr, batch_size=64):
     return model_c
 
 
+def decrease_lrate(epoch):
+    initial_lr = 0.005
+    return initial_lr * 10 ** (-int(epoch/4))
+
+
 # Model training for regression network
 def regression_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps):
     model_r = Sequential()
     model_r = regression_network_last(model_r, lr=0.005)
-    for i in range(0, total_iterations - itr, itr):
-        div = (10 ** (int(i / itr)))
-        model_r.optimizer.lr.set_value = 0.005/div
-        epochs = int(itr / steps_per_epoch) + 1
-        model_r.fit_generator(generator=data_loader(train_data_path),
-                              steps_per_epoch=steps_per_epoch,
-                              epochs=epochs,
-                              verbose=1,
-                              validation_data=data_loader(val_data_path),
-                              validation_steps=val_steps)
-        model_r.save('models/regression.h5')
+    epochs = int(total_iterations / steps_per_epoch) + 1
+    lrate = keras.callbacks.LearningRateScheduler(decrease_lrate)
+    model_r.fit_generator(generator=data_loader(train_data_path),
+                          steps_per_epoch=steps_per_epoch,
+                          epochs=epochs,
+                          verbose=1,
+                          validation_data=data_loader(val_data_path),
+                          validation_steps=val_steps,
+                          callbacks=[lrate])
+    model_r.save('models/regression.h5')
 
 
 # Model training for classification network
 def classification_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps):
     model_c = Sequential()
     model_c = classification_network_last(model_c, lr=0.005)
-    for i in range(0, total_iterations - itr, itr):
-        div = (10 ** (int(i / itr)))
-        model_c.optimizer.lr.set_value = 0.005 / div
-        epochs = int(itr / steps_per_epoch) + 1
-        model_c.fit_generator(generator=data_loader(train_data_path),
-                              steps_per_epoch=steps_per_epoch,
-                              epochs=epochs,
-                              verbose=1,
-                              validation_data=data_loader(val_data_path),
-                              validation_steps=val_steps)
-        model_c.save('models/classification.h5')
+    lrate = keras.callbacks.LearningRateScheduler(decrease_lrate)
+    epochs = int(total_iterations / steps_per_epoch) + 1
+    model_c.fit_generator(generator=data_loader(train_data_path),
+                          steps_per_epoch=steps_per_epoch,
+                          epochs=epochs,
+                          verbose=1,
+                          validation_data=data_loader(val_data_path),
+                          validation_steps=val_steps,
+                          callbacks=[lrate])
+    model_c.save('models/classification.h5')
 
 
 def test_model(model_save_path, test_data_path, test_size=5000, batch_size=64):
     i = 0
     j = 0
-    error = np.empty(int(test_size/batch_size))
+    error = np.empty(int(test_size/batch_size)+1)
     images = np.empty((batch_size, 128, 128, 2))
     offsets = np.empty((batch_size, 8))
     model_l = load_model(model_save_path)
@@ -114,13 +119,9 @@ def test_model(model_save_path, test_data_path, test_size=5000, batch_size=64):
         i = i + 1
         if i % batch_size == 0:
             offsets_predicted = model_l.predict(images)*64
-            x_1 = np.sqrt((offsets[:, 0] - offsets_predicted[:, 0])**2 + (offsets[:, 1] - offsets_predicted[:, 1])**2)
-            x_2 = np.sqrt((offsets[:, 2] - offsets_predicted[:, 2])**2 + (offsets[:, 3] - offsets_predicted[:, 3])**2)
-            x_3 = np.sqrt((offsets[:, 4] - offsets_predicted[:, 4])**2 + (offsets[:, 5] - offsets_predicted[:, 5])**2)
-            x_4 = np.sqrt((offsets[:, 6] - offsets_predicted[:, 6])**2 + (offsets[:, 7] - offsets_predicted[:, 7])**2)
-            error[j] = np.average(x_1 + x_2 + x_3 + x_4)/4
-            print('Mean Corner Error: ', error[j])
             j = j + 1
+            error[j] = np.average(np.abs(offsets - offsets_predicted))
+            print('Mean Corner Error: ', error[j])
             i = 0
     print('Mean Average Corner Error: ', np.average(error))
 
@@ -140,11 +141,11 @@ val_steps = int(val_samples / batch_size)
 
 itr = 30000
 
-# print("Starting Training of Regression Network...")
-# regression_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
+print("Starting Training of Regression Network...")
+regression_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
 
-# print("Starting Training of Classification Network...")
-# classification_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
+print("Starting Training of Classification Network...")
+classification_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
 
 print("Testing the Regression Network...")
 test_model(model_save_path='models/regression.h5', test_data_path='test-data/')
