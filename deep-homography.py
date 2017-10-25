@@ -105,7 +105,7 @@ def classification_network(train_data_path, val_data_path, total_iterations, bat
 def test_model(model_save_path, test_data_path, test_size=5000, batch_size=64):
     i = 0
     j = 0
-    error = np.empty(int(test_size/batch_size)+1)
+    error = np.empty(int(test_size/batch_size))
     images = np.empty((batch_size, 128, 128, 2))
     offsets = np.empty((batch_size, 8))
     model_l = load_model(model_save_path)
@@ -116,9 +116,13 @@ def test_model(model_save_path, test_data_path, test_size=5000, batch_size=64):
         i = i + 1
         if i % batch_size == 0:
             offsets_predicted = model_l.predict(images)*64
-            j = j + 1
-            error[j] = np.average(np.abs(offsets - offsets_predicted))
+            x_1 = np.sqrt((offsets[:, 1] - offsets_predicted[:, 1])**2 + (offsets[:, 0] - offsets_predicted[:, 0])**2)
+            x_2 = np.sqrt((offsets[:, 3] - offsets_predicted[:, 3])**2 + (offsets[:, 2] - offsets_predicted[:, 2])**2)
+            x_3 = np.sqrt((offsets[:, 5] - offsets_predicted[:, 5])**2 + (offsets[:, 4] - offsets_predicted[:, 4])**2)
+            x_4 = np.sqrt((offsets[:, 7] - offsets_predicted[:, 7])**2 + (offsets[:, 6] - offsets_predicted[:, 6])**2)
+            error[j] = np.average(x_1 + x_2 + x_3 + x_4)/4
             print('Mean Corner Error: ', error[j])
+            j = j + 1
             i = 0
     print('Mean Average Corner Error: ', np.average(error))
 
