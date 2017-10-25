@@ -40,7 +40,7 @@ Uses of functions:
 
 <i>In deep-homography.py</i>
 <ul>
-  <li>data_loader(path) - loads the npz files<li>
+  <li>data_loader(path) - loads the npz files</li>
   <ul>
     <li>path - path where to load the data</li>
   </ul>
