@@ -6,6 +6,7 @@ from keras import backend as K
 import glob
 import numpy as np
 import os.path
+import matplotlib.pyplot as plt
 
 
 # Data loader for training and validation
@@ -143,14 +144,14 @@ val_steps = int(val_samples / batch_size)
 
 itr = 30000
 
-print("Starting Training of Regression Network...")
-regression_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
-
-print("Starting Training of Classification Network...")
-classification_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
+# print("Starting Training of Regression Network...")
+# regression_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
+#
+# print("Starting Training of Classification Network...")
+# classification_network(train_data_path, val_data_path, total_iterations, batch_size, itr, steps_per_epoch, val_steps)
 
 print("Testing the Regression Network...")
 test_model(model_save_path='models/regression.h5', test_data_path='test-data/')
 
-print("Testing the Classification Network...")
-test_model(model_save_path='models/classification.h5', test_data_path='test-data/')
+# print("Testing the Classification Network...")
+# test_model(model_save_path='models/classification.h5', test_data_path='test-data/')
