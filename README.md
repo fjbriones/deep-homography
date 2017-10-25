@@ -87,3 +87,10 @@ Uses of functions:
     <li>batch_size - batch size to be accepted by the network. Same as batch_size during training</li>
   </ul>
 </ul>
+
+<b>Current Performance</b>
+<ul>
+  <li>Regression Network MACE - 49.425491601</li>
+  <li>Classification Network MACE - 71.5220545317</li>
+</ul>
+  
